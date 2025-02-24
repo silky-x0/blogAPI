@@ -17,13 +17,37 @@ class UserModel(db.Model):
     def __repr__(self):
         return f"Username = {self.Uname}, Email = {self.mail}"
 
+user_args = reqparse.RequestParser()
+user_args.add_argument('Uname', type=str, required=True, help="Name cannot be empty")
+user_args.add_argument('mail', type=str, required=True, help="mail cannot be empty")
+
+userFields = {
+    'id':fields.Integer,
+    'Uname':fields.String,
+    'mail':fields.String,
+}
+class Users(Resource):
+    @marshal_with(userFields)
+    def get(self):
+        users = UserModel.query.all()
+        return users
+    
+    @marshal_with(userFields)
+    def post(self):
+        args = user_args.parse_args()
+        user = UserModel(Uname=args["Uname"], mail=args["mail"])
+        db.session.add(user)
+        db.session.commit()
+        users = UserModel.query.all()
+        return users, 201
+
+api.add_resource(Users, '/api/users')    
+
 @app.route("/")
 def home():
     return '<h1>Hello wrld</h1>'
 
-@app.route("/user")
-def ppl():
-    return "Hello ppl"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
